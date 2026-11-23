@@ -800,7 +800,7 @@ label_34:
         {
             Conexion.connectString = ConfigurationManager.AppSettings["OFC1"];
 
-            // 1. Ejecutar sp_GenerarVouchers
+            // Ejecutar sp_GenerarVouchers
             ADO_V2 spGenerar = new ADO_V2();
             spGenerar.SP = "sp_GenerarVouchers";
             spGenerar.AgregarParametro("@CantidadOrdenada", ADO_V2.enumTipo_de_Datos._entero, cantidadordenada);
@@ -810,7 +810,32 @@ label_34:
             spGenerar.AgregarParametro("@dDueDate", ADO_V2.enumTipo_de_Datos._varchar, fechaVencimiento);
             spGenerar.leer();
 
-            // 2. Ejecutar sp_ListarVouchers por código de cliente
+                return ListarVouchers(codigoCliente.Trim());
+
+        }
+        catch (Exception ex)
+        {
+            this.log("GenerarYListarVouchers -> " + ex.Message + " | " + ex.StackTrace);
+        }
+        
+        return lista;
+    }
+
+    /// <summary>
+    /// Ejecuta <c>sp_ListarVouchers</c>.
+    /// </summary>
+    /// <param name="codigoCliente">Código del cliente (ejemplo: <c>"123456"</c>).</param>
+    /// <returns>Listado de vouchers generados para el cliente indicado.</returns>
+    [HttpGet]
+    public IEnumerable<webApiCinexpassDigital.Models.VoucherGeneradoItem> ListarVouchers(
+        string codigoCliente)
+    {
+        List<webApiCinexpassDigital.Models.VoucherGeneradoItem> lista = new List<webApiCinexpassDigital.Models.VoucherGeneradoItem>();
+
+        try
+        {
+            Conexion.connectString = ConfigurationManager.AppSettings["OFC1"];
+
             ADO_V2 spListar = new ADO_V2();
             spListar.SP = "sp_ListarVouchers";
             spListar.AgregarParametro("@CodigoCliente", ADO_V2.enumTipo_de_Datos._varchar, codigoCliente);
@@ -834,9 +859,9 @@ label_34:
         }
         catch (Exception ex)
         {
-            this.log("GenerarYListarVouchers -> " + ex.Message + " | " + ex.StackTrace);
+            this.log("ListarVouchers -> " + ex.Message + " | " + ex.StackTrace);
         }
-        
+
         return lista;
     }
 
