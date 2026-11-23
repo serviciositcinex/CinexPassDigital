@@ -777,7 +777,70 @@ label_34:
     return str;
   }
 
-  private void CreatePDF(
+    /// <summary>
+    /// Ejecuta <c>sp_GenerarVouchers</c> para crear vouchers en VistaApp y luego consulta <c>sp_ListarVouchers</c> por cliente.
+    /// </summary>
+    /// <param name="cantidadordenada">Cantidad de vouchers a generar (ejemplo: <c>3</c>).</param>
+    /// <param name="voucherTypeId">ID del tipo de voucher (<c>lVoucherTypeID</c>, ejemplo: <c>210</c>).</param>
+    /// <param name="codigoCliente">Código del cliente (ejemplo: <c>"123456"</c>).</param>
+    /// <param name="nombreCliente">Nombre del cliente (ejemplo: <c>"Corporación Andina"</c>).</param>
+    /// <param name="fechaVencimiento">Fecha de vencimiento en formato <c>YYYY-MM-DD</c> (ejemplo: <c>"2026-11-24"</c>).</param>
+    /// <returns>Listado de vouchers generados para el cliente indicado.</returns>
+    [HttpPost] 
+    public IEnumerable<webApiCinexpassDigital.Models.VoucherGeneradoItem> GenerarYListarVouchers(
+        int cantidadordenada,
+        int voucherTypeId,
+        string codigoCliente,
+        string nombreCliente,
+        string fechaVencimiento)
+    {
+        List<webApiCinexpassDigital.Models.VoucherGeneradoItem> lista = new List<webApiCinexpassDigital.Models.VoucherGeneradoItem>();
+
+        try
+        {
+            Conexion.connectString = ConfigurationManager.AppSettings["OFC1"];
+
+            // 1. Ejecutar sp_GenerarVouchers
+            ADO_V2 spGenerar = new ADO_V2();
+            spGenerar.SP = "sp_GenerarVouchers";
+            spGenerar.AgregarParametro("@CantidadOrdenada", ADO_V2.enumTipo_de_Datos._entero, cantidadordenada);
+            spGenerar.AgregarParametro("@VoucherTypeID", ADO_V2.enumTipo_de_Datos._entero, voucherTypeId);
+            spGenerar.AgregarParametro("@CodigoCliente", ADO_V2.enumTipo_de_Datos._varchar, codigoCliente);
+            spGenerar.AgregarParametro("@NombreCliente", ADO_V2.enumTipo_de_Datos._varchar, nombreCliente);
+            spGenerar.AgregarParametro("@dDueDate", ADO_V2.enumTipo_de_Datos._varchar, fechaVencimiento);
+            spGenerar.leer();
+
+            // 2. Ejecutar sp_ListarVouchers por código de cliente
+            ADO_V2 spListar = new ADO_V2();
+            spListar.SP = "sp_ListarVouchers";
+            spListar.AgregarParametro("@CodigoCliente", ADO_V2.enumTipo_de_Datos._varchar, codigoCliente);
+            spListar.leer();
+
+            if (spListar.DS != null && spListar.DS.Tables.Count > 0)
+            {
+                foreach (DataRow row in spListar.DS.Tables[0].Rows)
+                {
+                    lista.Add(new webApiCinexpassDigital.Models.VoucherGeneradoItem
+                    {
+                        CodigoCliente = row["CodigoCliente"]?.ToString(),
+                        NombreCliente = row["NombreCliente"]?.ToString(),
+                        PrefijoVoucher = row["PrefijoVoucher"]?.ToString(),
+                        NombreVoucher = row["NombreVoucher"]?.ToString(),
+                        Stock_strBarcode = row["Stock_strBarcode"]?.ToString(),
+                        dExpiryDate = row["dExpiryDate"]?.ToString()
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            this.log("GenerarYListarVouchers -> " + ex.Message + " | " + ex.StackTrace);
+        }
+        
+        return lista;
+    }
+
+    private void CreatePDF(
     string name,
     string date,
     string codebar,
