@@ -826,6 +826,7 @@ label_34:
     /// </summary>
     /// <param name="codigoCliente">Código del cliente (ejemplo: <c>"123456"</c>).</param>
     /// <returns>Listado de vouchers generados para el cliente indicado.</returns>
+    /// Listado
     [HttpGet]
     public IEnumerable<webApiCinexpassDigital.Models.VoucherGeneradoItem> ListarVouchers(
         string codigoCliente)
